@@ -49,12 +49,18 @@ workflows:
           keychain add-certificates
           xcode-project use-profiles
 
-      - name: Build signed IPA
+      - name: Build Flutter iOS (no codesign)
         script: |
-          flutter build ipa --release --export-method app-store \
+          flutter build ios --release --no-codesign \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=WEDDING_CLOUD_MODE=$WEDDING_CLOUD_MODE
+
+      - name: Archive and export signed IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner
 
     artifacts:
       - build/ios/ipa/*.ipa
