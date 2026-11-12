@@ -12,9 +12,6 @@ workflows:
       cocoapods: default
       groups:
         - supabase-prod
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: fr.jusquanous.jusquaNous
       vars:
         BUNDLE_ID: "fr.jusquanous.jusquaNous"
         WEDDING_CLOUD_MODE: "auto"
@@ -54,7 +51,7 @@ workflows:
 
       - name: Build signed IPA
         script: |
-          flutter build ipa --release \
+          flutter build ipa --release --export-method app-store \
             --dart-define=SUPABASE_URL=$SUPABASE_URL \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
             --dart-define=WEDDING_CLOUD_MODE=$WEDDING_CLOUD_MODE
