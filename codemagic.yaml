@@ -53,7 +53,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your-email@example.com
+          - gaming.by.alkatraz@gmail.com
 
       # Optionnel : activer après avoir configuré l'intégration App Store Connect dans Codemagic
       # app_store_connect:
