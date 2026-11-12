@@ -3,6 +3,8 @@ workflows:
     name: iOS • TestFlight
     max_build_duration: 90
     instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Entre Nous
 
     environment:
       flutter: stable
