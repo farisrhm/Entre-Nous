@@ -8,6 +8,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      groups:
+        - supabase-prod
       vars:
         BUNDLE_ID: "fr.jusquanous.jusquaNous"
         WEDDING_CLOUD_MODE: "auto"
@@ -69,6 +71,8 @@ workflows:
 
     environment:
       flutter: stable
+      groups:
+        - supabase-prod
       vars:
         WEDDING_CLOUD_MODE: "auto"
         # À définir dans Codemagic (Environment variables) en mode Secret:
