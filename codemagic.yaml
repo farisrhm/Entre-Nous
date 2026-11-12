@@ -105,7 +105,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your-email@example.com
+          - gaming.by.alkatraz@gmail.com
 
       # Optionnel : activer après configuration de Google Play service account dans Codemagic
       # google_play:
