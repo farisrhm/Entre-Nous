@@ -10,6 +10,9 @@ workflows:
       cocoapods: default
       groups:
         - supabase-prod
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: fr.jusquanous.jusquaNous
       vars:
         BUNDLE_ID: "fr.jusquanous.jusquaNous"
         WEDDING_CLOUD_MODE: "auto"
@@ -40,6 +43,13 @@ workflows:
           pod install
           cd ..
 
+      - name: Configure iOS signing files
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+
       - name: Build signed IPA
         script: |
           flutter build ipa --release \
@@ -57,12 +67,11 @@ workflows:
         recipients:
           - gaming.by.alkatraz@gmail.com
 
-      # Optionnel : activer après avoir configuré l'intégration App Store Connect dans Codemagic
-      # app_store_connect:
-      #   auth: integration
-      #   submit_to_testflight: true
-      #   beta_groups:
-      #     - Internal Testers
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
 
   android-release:
     name: Android • Release AAB
