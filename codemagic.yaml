@@ -1,0 +1,113 @@
+workflows:
+  ios-testflight:
+    name: iOS • TestFlight
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "fr.jusquanous.jusquaNous"
+        WEDDING_CLOUD_MODE: "auto"
+        # À définir dans Codemagic (Environment variables) en mode Secret:
+        # SUPABASE_URL
+        # SUPABASE_PUBLISHABLE_KEY
+
+    scripts:
+      - name: Validate required variables
+        script: |
+          set -e
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "Missing SUPABASE_URL"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "Missing SUPABASE_PUBLISHABLE_KEY"
+            exit 1
+          fi
+
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+
+      - name: CocoaPods install
+        script: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build signed IPA
+        script: |
+          flutter build ipa --release \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
+            --dart-define=WEDDING_CLOUD_MODE=$WEDDING_CLOUD_MODE
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+
+      # Optionnel : activer après avoir configuré l'intégration App Store Connect dans Codemagic
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      #   beta_groups:
+      #     - Internal Testers
+
+  android-release:
+    name: Android • Release AAB
+    max_build_duration: 60
+    instance_type: linux_x2
+
+    environment:
+      flutter: stable
+      vars:
+        WEDDING_CLOUD_MODE: "auto"
+        # À définir dans Codemagic (Environment variables) en mode Secret:
+        # SUPABASE_URL
+        # SUPABASE_PUBLISHABLE_KEY
+
+    scripts:
+      - name: Validate required variables
+        script: |
+          set -e
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "Missing SUPABASE_URL"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "Missing SUPABASE_PUBLISHABLE_KEY"
+            exit 1
+          fi
+
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+
+      - name: Build appbundle
+        script: |
+          flutter build appbundle --release \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY \
+            --dart-define=WEDDING_CLOUD_MODE=$WEDDING_CLOUD_MODE
+
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+
+      # Optionnel : activer après configuration de Google Play service account dans Codemagic
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
