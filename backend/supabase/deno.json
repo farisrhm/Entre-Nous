@@ -1,0 +1,7 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "check": "deno check functions/wedding-list/index.ts functions/wedding-save/index.ts functions/wedding-delete/index.ts",
+    "test": "deno test --allow-env=SUPABASE_URL,SUPABASE_SERVICE_ROLE_KEY tests/*_test.ts"
+  }
+}

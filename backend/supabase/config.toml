@@ -1,0 +1,10 @@
+project_id = "jusqua-nous"
+
+# Every handler verifies the user JWT with auth.getUser before any service-role call.
+# This supports projects using asymmetric JWT signing keys.
+[functions.wedding-list]
+verify_jwt = false
+[functions.wedding-save]
+verify_jwt = false
+[functions.wedding-delete]
+verify_jwt = false

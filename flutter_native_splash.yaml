@@ -1,0 +1,14 @@
+flutter_native_splash:
+  color: "#243B32"
+  image: "assets/images/Elegant_Botanical_AF_Monogram_copy-removebg-preview.png"
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: false
+
+  android_12:
+    color: "#243B32"
+    image: "assets/images/Elegant_Botanical_AF_Monogram_copy-removebg-preview.png"
+
+  ios: true
+  android: true
+  web: false

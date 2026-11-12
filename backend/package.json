@@ -1,0 +1,16 @@
+{
+  "name": "jusqua-nous-server",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {"node": ">=22.13 <23 || >=24.11 <25"},
+  "scripts": {
+    "start": "node local/server.js",
+    "setup": "node local/setup.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "5.3.0",
+    "mongodb-memory-server-core": "11.3.0",
+    "parse-server": "9.11.0"
+  }
+}
