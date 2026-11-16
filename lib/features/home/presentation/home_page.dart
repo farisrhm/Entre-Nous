@@ -6,6 +6,9 @@ import '../../../core/application/providers.dart';
 import '../../../core/widgets/shared.dart';
 import '../../../app/theme.dart';
 import '../domain/wedding_clock.dart';
+import '../domain/daily_thought.dart';
+import 'wedding_journey.dart';
+import 'countdown_carousel.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -32,15 +35,15 @@ class HomePage extends ConsumerWidget {
 
   String _heroForDay(DateTime now) {
     final localDay = DateTime(now.year, now.month, now.day);
-    final dayIndex = localDay.millisecondsSinceEpoch ~/
-        Duration.millisecondsPerDay;
+    final dayIndex =
+        localDay.millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
     return _dailyPhotos[dayIndex % _dailyPhotos.length];
   }
 
   String _bottomForDay(DateTime now) {
     final localDay = DateTime(now.year, now.month, now.day);
-    final dayIndex = localDay.millisecondsSinceEpoch ~/
-        Duration.millisecondsPerDay;
+    final dayIndex =
+        localDay.millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
     return _dailyBottomPhotos[dayIndex % _dailyBottomPhotos.length];
   }
 
@@ -48,6 +51,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(settingsProvider);
     final now = ref.watch(clockProvider).value ?? DateTime.now();
+    final thought = dailyThoughtAt(now);
     final heroOfDay = _heroForDay(now);
     final bottomOfDay = _bottomForDay(now);
     final phase = s.phase == 'auto'
@@ -55,9 +59,6 @@ class HomePage extends ConsumerWidget {
         : WeddingPhase.values.byName(s.phase);
     final count = countdownAt(now, phase);
     final after = phase == WeddingPhase.after, day = phase == WeddingPhase.day;
-    final countdownProgress = (after || day)
-        ? 1.0
-        : ((30 - count.inDays) / 30).clamp(.02, 1).toDouble();
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -148,41 +149,10 @@ class HomePage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 30),
                       if (!day)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            for (final part in [
-                              (count.inDays, 'Jours'),
-                              (count.inHours % 24, 'Heures'),
-                              (count.inMinutes % 60, 'Minutes'),
-                              (count.inSeconds % 60, 'Secondes'),
-                            ])
-                              Expanded(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        '${part.$1}'.padLeft(2, '0'),
-                                        style: const TextStyle(
-                                          fontFamily: 'Cormorant Garamond',
-                                          fontSize: 37,
-                                          color: Palette.ivory,
-                                        ),
-                                      ),
-                                      Text(
-                                        part.$2,
-                                        style: const TextStyle(
-                                          fontSize: 9,
-                                          color: Palette.ivory,
-                                          letterSpacing: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
+                        CountdownCarousel(
+                          duration: count,
+                          after: after,
+                          reduceMotion: s.reduceMotion,
                         ),
                       const SizedBox(height: 26),
                       Text(
@@ -232,31 +202,33 @@ class HomePage extends ConsumerWidget {
                           ),
                           const SizedBox(height: 18),
                           Text(
-                            '« Parmi toutes les histoires possibles, ma préférée est celle que nous écrivons ensemble. »',
+                            '« ${thought.text} »',
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            thought.attribution,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                           TextButton(
                             onPressed: () => showReading(
                               context,
-                              'Pour nous, toujours',
-                              'Et si je devais tout recommencer, je chercherais encore ta main dans chaque foule, ton rire dans chaque pièce, ton cœur dans chaque vie.',
+                              'La pensée du jour',
+                              thought.reading,
                             ),
                             child: const Text('Découvrir  →'),
                           ),
                         ],
                       ),
                     ),
-                    const SectionHeading(
-                      'LE CHEMIN JUSQU’À NOUS',
-                      'Chaque jour,\nun peu plus près.',
-                      'Notre aventure · J–30 · J–7 · Notre grand jour',
-                    ),
-                    LinearProgressIndicator(
-                      value: countdownProgress,
-                      backgroundColor: Palette.cream,
-                      color: Palette.gold,
-                      minHeight: 3,
+                    const SizedBox(height: 28),
+                    WeddingJourney(
+                      now: now,
+                      firstName: s.firstName,
+                      secondName: s.secondName,
+                      reduceMotion: s.reduceMotion,
                     ),
                     const SectionHeading(
                       'RIEN QU’À NOUS',

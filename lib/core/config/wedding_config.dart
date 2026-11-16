@@ -1,4 +1,6 @@
 abstract final class WeddingConfig {
+  // Start of the illustrated journey (J−100), shared by both devices.
+  static final journeyStart = DateTime.utc(2026, 10, 15);
   static final wedding = DateTime.parse('2027-01-23T13:00:00Z');
   static final dayEnd = DateTime.parse('2027-01-23T23:00:00Z');
   static final calendarStart = DateTime.parse('2026-12-24T23:00:00Z');
