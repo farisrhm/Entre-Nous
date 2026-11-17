@@ -9,6 +9,7 @@ import '../domain/wedding_clock.dart';
 import '../domain/daily_thought.dart';
 import 'wedding_journey.dart';
 import 'countdown_carousel.dart';
+import 'love_word_card.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -223,6 +224,8 @@ class HomePage extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    LoveWordCard(now: now),
                     const SizedBox(height: 28),
                     WeddingJourney(
                       now: now,

@@ -20,7 +20,7 @@ alter table storage.objects enable row level security;
 create policy existing_open_policy on storage.objects for all to public using(true) with check(true);
 insert into auth.users values ('${a}'),('${b}'),('${outsider}');
 `);
-for(const filename of ['001_init_wedding.sql','002_private_storage_atomic.sql']) {
+for(const filename of ['001_init_wedding.sql','002_private_storage_atomic.sql','003_notifications.sql']) {
   const sql=await readFile(new URL('../migrations/'+filename,import.meta.url),'utf8');
   await db.exec(sql.replace('create extension if not exists pgcrypto;',''));
 }
@@ -35,6 +35,33 @@ async function asUser(id,sql,args=[]) {
   catch(e){await db.exec('rollback');throw e;}
 }
 try {
+  const queue = async(id) => (await db.query("select * from public.wedding_notification_queue where entry_uuid=(select id from public.wedding_entries where entry_id=$1) order by event",[id])).rows;
+  await save(a,'push-memory','memory',{title:'Photo',photos:[]});
+  assert.equal((await queue('push-memory')).length,1);
+  assert.equal((await queue('push-memory'))[0].recipient_id,b);
+  await save(a,'push-memory','memory',{title:'Photo edited',photos:[]});
+  assert.equal((await queue('push-memory')).length,1);
+  await save(a,'push-letter','letter',{title:'Letter',body:'secret',recipientId:b,openAt:'2099-01-01T00:00:00Z'});
+  assert.equal((await queue('push-letter')).length,2);
+  await save(a,'push-letter','letter',{title:'Letter',body:'secret',recipientId:b,openAt:'2098-01-01T00:00:00Z'});
+  const scheduled=(await queue('push-letter')).find(q=>q.event==='letter_ready');
+  assert.equal(new Date(scheduled.available_at).getUTCFullYear(),2098);
+  await save(a,'self-dua','dua',{title:'Self',body:'secret',recipientId:a});
+  assert.equal((await queue('self-dua')).length,0);
+  await save(a,'push-thought-1','thought',{title:'Hi'});
+  await save(a,'push-thought-2','thought',{title:'Hi again'});
+  assert.equal((await queue('push-thought-1')).length,1);
+  assert.equal((await queue('push-thought-2')).length,0);
+  await db.query("select public.wedding_delete_atomic($1,'letter','push-letter')",[a]);
+  assert.equal((await queue('push-letter')).length,0);
+  await assert.rejects(asUser(b,"select * from public.wedding_push_devices"));
+  await assert.rejects(asUser(b,"select * from public.wedding_notification_queue"));
+  await assert.rejects(asUser(b,"select public.wedding_claim_notifications()"));
+  const claimed=(await db.query("select * from public.wedding_claim_notifications()")).rows;
+  assert.ok(claimed.length>0);
+  assert.ok(claimed.every(q=>q.lease && q.status==='processing' && q.attempts===1));
+  const again=(await db.query("select * from public.wedding_claim_notifications()")).rows;
+  assert.equal(again.length,0);
   await save(a,'letter','letter',{title:'Plus tard',body:'SECRET',recipientId:b,openAt:'2099-01-01T00:00:00Z'});
   await assert.rejects(asUser(outsider,'select * from public.wedding_entry_debug'));
   assert.equal((await asUser(a,'select * from public.wedding_entries')).rows.length,0);

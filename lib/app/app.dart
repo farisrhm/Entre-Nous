@@ -15,6 +15,8 @@ import '../features/universe/presentation/universe_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import 'theme.dart';
+import '../core/notifications/notification_bridge.dart';
+import '../core/notifications/push_service.dart';
 import '../features/together/domain/together_space.dart';
 import '../features/together/presentation/together_page.dart';
 
@@ -84,7 +86,10 @@ class _GateState extends ConsumerState<Gate> {
     if (!ref.watch(settingsProvider).onboardingDone) {
       return const OnboardingPage();
     }
-    return widget.child;
+    return NotificationBridge(
+      router: ref.read(routerProvider),
+      child: widget.child,
+    );
   }
 }
 
@@ -147,6 +152,7 @@ class _WeddingShellState extends ConsumerState<WeddingShell>
     final repo = ref.read(repositoryProvider);
     if (repo is! CloudWeddingRepository) return;
     try {
+      await ref.read(pushServiceProvider)?.disconnect();
       await repo.logout();
     } catch (e) {
       if (mounted) showError(context, e);

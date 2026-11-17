@@ -8,3 +8,10 @@ verify_jwt = false
 verify_jwt = false
 [functions.wedding-delete]
 verify_jwt = false
+
+# User JWT checked explicitly, matching the existing wedding functions.
+[functions.wedding-push-device]
+verify_jwt = false
+# Cron-only: separate server secret, never accepted from a mobile client.
+[functions.wedding-push-dispatch]
+verify_jwt = false

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/application/providers.dart';
 import '../../../core/widgets/shared.dart';
+import '../../../core/notifications/notification_settings.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -81,6 +82,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onChanged: (v) =>
                 setState(() => value = value.copy(reduceMotion: v)),
           ),
+          const NotificationSettingsPanel(),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: busy ? null : save,

@@ -55,3 +55,8 @@ app.*.map.json
 
 /backend/supabase/node_modules/
 /backend/supabase/.temp/
+
+# Push server credentials must never enter the app or repository.
+*.p8
+*-firebase-adminsdk-*.json
+/config/push*.env
