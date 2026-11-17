@@ -31,11 +31,21 @@ def rejection_reasons(profile, bundle_id, now):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--directory", type=Path, required=True)
+    parser.add_argument("--directory", type=Path, action="append", required=True)
     parser.add_argument("--bundle-id", required=True)
     args = parser.parse_args()
     candidates = []
-    for path in sorted(args.directory.glob("*.mobileprovision")):
+    paths = sorted({path for directory in args.directory
+                    for path in directory.glob("*.mobileprovision")})
+    if not paths:
+        print(
+            "Aucun profil installé par Codemagic. Vérifier Team settings > "
+            "Code signing identities : certificat Distribution et profil App Store "
+            "pour ce bundle ID, avec certificat associé (coche verte).",
+            file=sys.stderr,
+        )
+        return 1
+    for path in paths:
         result = subprocess.run(
             ["security", "cms", "-D", "-i", str(path)],
             capture_output=True,
