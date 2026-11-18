@@ -15,6 +15,7 @@ import '../features/universe/presentation/universe_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import 'theme.dart';
+import '../features/memory/presentation/memory_page.dart';
 import '../core/notifications/notification_bridge.dart';
 import '../core/notifications/push_service.dart';
 import '../features/together/domain/together_space.dart';
@@ -40,6 +41,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
         ],
       ),
+      GoRoute(path: '/universe/memory', builder: (_, _) => const MemoryPage()),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
     ],
   );

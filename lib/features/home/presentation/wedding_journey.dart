@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/shared.dart';
 import '../domain/journey_progress.dart';
+import 'journey_hourglass.dart';
 
 class WeddingJourney extends StatelessWidget {
   final DateTime now;
@@ -77,61 +78,18 @@ class WeddingJourney extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final milestone in const [
-                (
-                  100,
-                  'Le début du chemin',
-                  'Cent jours pour rêver à la vie que nous allons construire.',
-                ),
-                (
-                  50,
-                  'À mi-chemin',
-                  'La distance se réduit. Et notre histoire grandit.',
-                ),
-                (
-                  30,
-                  'Un dernier mois',
-                  'Bientôt, tous ces petits pas deviendront notre grand oui.',
-                ),
-                (
-                  7,
-                  'Tout près de toi',
-                  'Plus qu’une semaine avant de prendre ta main pour la suite.',
-                ),
-                (0, 'Notre grand jour', 'Jusqu’à nous. Maintenant, ensemble.'),
-              ])
-                ActionChip(
-                  avatar: Icon(
-                    journey.daysRemaining <= milestone.$1
-                        ? Icons.favorite
-                        : Icons.lock_outline,
-                    size: 14,
-                    color: Palette.forest,
-                  ),
-                  label: Text(
-                    milestone.$1 == 0 ? 'Notre oui' : 'J−${milestone.$1}',
-                  ),
-                  onPressed: () => showReading(
-                    context,
-                    milestone.$2,
-                    journey.daysRemaining <= milestone.$1
-                        ? milestone.$3
-                        : 'Ce petit mot vous attend à J−${milestone.$1}. Encore ${journey.daysRemaining - milestone.$1} jours de chemin.',
-                  ),
-                ),
-            ],
-          ),
+          JourneyHourglass(progress: journey.progress, reduceMotion: still),
           const SizedBox(height: 12),
           Text(
             journey.together
-                ? 'Un même chemin, une vie à partager.'
-                : 'Touchez une étape pour découvrir son petit mot.',
+                ? 'Notre éternité commence.'
+                : 'Chaque grain nous rapproche.',
             textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '28 mars 2026 · 23 janvier 2027',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -624,7 +582,7 @@ class _JourneyPainter extends CustomPainter {
       _fill(Palette.brown.withValues(alpha: .12)),
     );
     canvas.scale(facingRight ? 1 : -1, 1);
-    const skin = Color(0xFFD1A785);
+    final skin = princess ? const Color(0xFFC79873) : const Color(0xFF70442F);
     if (princess) {
       final hair = Path()
         ..moveTo(-6, -47)
@@ -761,10 +719,19 @@ class _JourneyPainter extends CustomPainter {
       );
       canvas.drawCircle(const Offset(-1, -39), 1, _fill(Palette.gold));
     } else {
-      canvas.drawLine(
-        const Offset(-5, -48),
-        const Offset(5, -49),
-        _stroke(Palette.gold, 1),
+      // Short, textured curls and a softly outlined beard for Faris.
+      for (var i = 0; i < 7; i++) {
+        canvas.drawCircle(
+          Offset(-5 + i * 1.8, -49 - math.sin(i * .5)),
+          2.1,
+          _fill(const Color(0xFF261D19)),
+        );
+      }
+      canvas.drawPath(
+        Path()
+          ..moveTo(-2, -39)
+          ..quadraticBezierTo(3, -35, 6, -39),
+        _stroke(const Color(0xFF39251D), 1.4),
       );
     }
     final arm = Path()

@@ -61,6 +61,30 @@ class UniverseSpaces extends ConsumerWidget {
               ),
             ),
           ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Paper(
+            color: Palette.cream,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.style_outlined,
+                color: Palette.forest,
+                size: 30,
+              ),
+              title: Text(
+                'Notre Memory',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              subtitle: const Text(
+                'Un petit coffret de photos. Des paires à retrouver.',
+                style: TextStyle(fontSize: 12),
+              ),
+              trailing: const Icon(Icons.arrow_forward, size: 18),
+              onTap: () => context.push('/universe/memory'),
+            ),
+          ),
+        ),
         const SizedBox(height: 26),
       ],
     );

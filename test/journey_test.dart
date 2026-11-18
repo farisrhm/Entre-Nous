@@ -7,8 +7,11 @@ void main() {
   test(
     'calendar progression is stable across devices and meets at French midnight',
     () {
-      expect(JourneyProgress.at(DateTime.utc(2026, 10, 14)).progress, 0);
-      expect(JourneyProgress.at(DateTime.utc(2026, 12, 4, 12)).progress, .5);
+      expect(JourneyProgress.at(DateTime.utc(2026, 3, 28)).progress, 0);
+      expect(
+        JourneyProgress.at(DateTime.utc(2026, 8, 25, 12)).progress,
+        closeTo(150 / 301, 1e-10),
+      );
       expect(
         JourneyProgress.at(
           DateTime.parse('2027-01-22T22:59:59Z'),
@@ -29,7 +32,7 @@ void main() {
     },
   );
   testWidgets(
-    'narrow screen, large text and milestones before and after wedding',
+    'narrow screen, large text and hourglass before and after wedding',
     (tester) async {
       tester.view.physicalSize = const Size(320, 1000);
       tester.view.devicePixelRatio = 1;
@@ -62,12 +65,8 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        await tester.ensureVisible(find.text('J−50'));
-        await tester.tap(find.text('J−50'));
-        await tester.pumpAndSettle();
-        expect(find.text('À mi-chemin'), findsOneWidget);
-        Navigator.of(tester.element(find.text('À mi-chemin'))).pop();
-        await tester.pumpAndSettle();
+        expect(find.text('J−50'), findsNothing);
+        expect(find.text('28 mars 2026 · 23 janvier 2027'), findsOneWidget);
       }
     },
   );

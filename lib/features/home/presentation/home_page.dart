@@ -22,6 +22,9 @@ class HomePage extends ConsumerWidget {
     'asset:assets/images/home_5.jpg',
     'asset:assets/images/home_6.jpg',
     'asset:assets/images/home_7.jpg',
+    'asset:assets/images/home_8.jpg',
+    'asset:assets/images/home_9.jpg',
+    'asset:assets/images/home_10.jpg',
   ];
 
   static const _dailyBottomPhotos = <String>[
@@ -32,6 +35,9 @@ class HomePage extends ConsumerWidget {
     'asset:assets/images/bottom_5.jpg',
     'asset:assets/images/bottom_6.jpg',
     'asset:assets/images/bottom_7.jpg',
+    'asset:assets/images/bottom_8.jpg',
+    'asset:assets/images/bottom_9.jpg',
+    'asset:assets/images/bottom_10.jpg',
   ];
 
   String _heroForDay(DateTime now) {
