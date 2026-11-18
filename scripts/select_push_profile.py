@@ -31,11 +31,14 @@ def rejection_reasons(profile, bundle_id, now):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--directory", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--directory", type=Path)
+    source.add_argument("--profile", type=Path)
     parser.add_argument("--bundle-id", required=True)
     args = parser.parse_args()
     candidates = []
-    for path in sorted(args.directory.glob("*.mobileprovision")):
+    paths = [args.profile] if args.profile else sorted(args.directory.glob("*.mobileprovision"))
+    for path in paths:
         result = subprocess.run(
             ["security", "cms", "-D", "-i", str(path)],
             capture_output=True,

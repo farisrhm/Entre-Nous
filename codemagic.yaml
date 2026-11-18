@@ -7,6 +7,12 @@ workflows:
       app_store_connect: Entre Nous
 
     environment:
+      ios_signing:
+        provisioning_profiles:
+          - profile: entre_nous_app_store
+            environment_variable: WEDDING_APP_STORE_PROFILE
+        certificates:
+          - "Entre Nous"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -52,15 +58,10 @@ workflows:
       - name: Configure iOS signing files
         script: |
           set -euo pipefail
-          keychain initialize
-          # Only inspect profiles fetched for this build, never cached profiles.
-          WEDDING_PROFILES_DIR=$(mktemp -d)
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE --strict-match-identifier --create \
-            --profiles-dir "$WEDDING_PROFILES_DIR"
-          keychain add-certificates
+          # Codemagic installs the explicitly referenced profile and certificate.
+          # Preserve its keychain; no certificate creation or separate private key.
           WEDDING_PUSH_PROFILE=$(python3 scripts/select_push_profile.py \
-            --directory "$WEDDING_PROFILES_DIR" --bundle-id "$BUNDLE_ID")
+            --profile "$WEDDING_APP_STORE_PROFILE" --bundle-id "$BUNDLE_ID")
           xcode-project use-profiles \
             --project ios/Runner.xcodeproj \
             --profile "$WEDDING_PUSH_PROFILE" \
