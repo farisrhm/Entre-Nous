@@ -230,7 +230,7 @@ class _HourglassPainter extends CustomPainter {
       text: const TextSpan(
         text: 'A & F',
         style: TextStyle(
-          fontFamily: 'serif',
+          fontFamily: 'Cormorant Garamond',
           fontSize: 15,
           fontStyle: FontStyle.italic,
           color: Color(0xFF76532A),
