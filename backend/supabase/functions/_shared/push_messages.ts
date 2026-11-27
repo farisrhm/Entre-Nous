@@ -32,6 +32,11 @@ export function pushMessage(event: string, name: string, gender: string) {
         title: "Le moment est arrivé",
         body: `Tu peux maintenant ouvrir la lettre ${from}.`,
       };
+    case "voucher":
+      return {
+        title: "Les petites attentions",
+        body: `${name} a laissé du nouveau dans votre carnet d’attentions.`,
+      };
     default:
       throw Error("Unsupported notification");
   }

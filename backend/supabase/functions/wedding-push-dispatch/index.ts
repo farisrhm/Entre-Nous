@@ -32,18 +32,65 @@ Deno.serve(async (req: Request) => {
       if (error) throw Error("Completion failed");
     };
     try {
+      let entry: {
+        id: string;
+        entry_id: string;
+        kind: string;
+        author_id: string;
+        fields: Record<string, any>;
+      } | null = null;
+      let coupleId = "couple";
+      if (job.event === "voucher") {
+        const { data: event, error: eventError } = await admin.from(
+          "couple_voucher_events",
+        )
+          .select("voucher_id,actor_id").eq("id", job.voucher_event_id)
+          .maybeSingle();
+        if (eventError) throw eventError;
+        if (event) {
+          const { data: voucher, error: voucherError } = await admin.from(
+            "couple_vouchers",
+          )
+            .select("id,couple_id,sender_id,recipient_id").eq(
+              "id",
+              event.voucher_id,
+            ).maybeSingle();
+          if (voucherError) throw voucherError;
+          if (
+            voucher &&
+            [voucher.sender_id, voucher.recipient_id].includes(
+              event.actor_id,
+            ) &&
+            job.recipient_id ===
+              (event.actor_id === voucher.sender_id
+                ? voucher.recipient_id
+                : voucher.sender_id)
+          ) {
+            coupleId = voucher.couple_id;
+            entry = {
+              id: voucher.id,
+              entry_id: voucher.id,
+              kind: "voucher",
+              author_id: event.actor_id,
+              fields: {},
+            };
+          }
+        }
+      } else {
+        const { data, error } = await admin.from("wedding_entries")
+          .select("id,entry_id,kind,author_id,fields").eq("id", job.entry_uuid)
+          .maybeSingle();
+        if (error) throw error;
+        entry = data;
+      }
       const { data: members, error: membersError } = await admin.from(
         "couple_members",
-      ).select("user_id,display_name,notification_gender").eq(
-        "couple_id",
-        "couple",
-      );
+      )
+        .select("user_id,display_name,notification_gender").eq(
+          "couple_id",
+          coupleId,
+        );
       if (membersError) throw membersError;
-      const { data: entry, error: entryError } = await admin.from(
-        "wedding_entries",
-      ).select("id,entry_id,kind,author_id,fields").eq("id", job.entry_uuid)
-        .maybeSingle();
-      if (entryError) throw entryError;
       const author = members?.find((m) => m.user_id === entry?.author_id);
       const recipient = members?.find((m) => m.user_id === job.recipient_id);
       if (

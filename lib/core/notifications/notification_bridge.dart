@@ -8,6 +8,7 @@ import '../widgets/shared.dart';
 import '../../features/story/domain/memory_album.dart';
 import '../../features/story/presentation/memory_gallery.dart';
 import 'push_service.dart';
+import '../../features/attentions/application/attention_providers.dart';
 
 /// Mounted only after authentication and onboarding; payloads never grant access.
 class NotificationBridge extends ConsumerStatefulWidget {
@@ -59,6 +60,20 @@ class _NotificationBridgeState extends ConsumerState<NotificationBridge>
     opening = true;
     service?.consume();
     try {
+      if (target.kind == 'voucher') {
+        ref.invalidate(attentionsProvider);
+        final vouchers = await ref.read(attentionsProvider.future);
+        if (!mounted ||
+            target.recipientId != ref.read(repositoryProvider).userId) {
+          return;
+        }
+        if (!vouchers.any((v) => v.id == target.entryId)) {
+          showError(context, 'Cette attention n’est plus disponible.');
+          return;
+        }
+        widget.router.go(target.path);
+        return;
+      }
       await ref.read(entriesProvider.notifier).refresh();
       if (!mounted ||
           target.recipientId != ref.read(repositoryProvider).userId) {

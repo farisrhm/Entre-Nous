@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../../app/theme.dart';
 import '../../../core/widgets/shared.dart';
+import 'memory_reactions.dart';
 
 Future<void> showMemoryGallery(
   BuildContext context,
   List<String> photos,
   String title, {
   int initialIndex = 0,
+  String? memoryId,
 }) {
   if (photos.isEmpty) return Future.value();
   return Navigator.of(context, rootNavigator: true).push<void>(
@@ -16,6 +18,7 @@ Future<void> showMemoryGallery(
         photos: photos,
         title: title,
         initialIndex: initialIndex,
+        memoryId: memoryId,
       ),
     ),
   );
@@ -25,11 +28,13 @@ class MemoryGallery extends StatefulWidget {
   final List<String> photos;
   final String title;
   final int initialIndex;
+  final String? memoryId;
   const MemoryGallery({
     super.key,
     required this.photos,
     required this.title,
     this.initialIndex = 0,
+    this.memoryId,
   });
   @override
   State<MemoryGallery> createState() => _MemoryGalleryState();
@@ -76,11 +81,18 @@ class _MemoryGalleryState extends State<MemoryGallery> {
                 minScale: 1,
                 maxScale: 4,
                 child: Center(
-                  child: Photo(widget.photos[i], fit: BoxFit.contain),
+                  child: GestureDetector(
+                    onLongPress: widget.memoryId == null
+                        ? null
+                        : () => showMemoryReactions(context, widget.memoryId!),
+                    child: Photo(widget.photos[i], fit: BoxFit.contain),
+                  ),
                 ),
               ),
             ),
           ),
+          if (widget.memoryId != null)
+            MemoryReactionBar(memoryId: widget.memoryId!, dark: true),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -125,7 +137,13 @@ class _MemoryGalleryState extends State<MemoryGallery> {
 class AlbumCover extends StatefulWidget {
   final List<String> photos;
   final String title;
-  const AlbumCover({super.key, required this.photos, required this.title});
+  final String? memoryId;
+  const AlbumCover({
+    super.key,
+    required this.photos,
+    required this.title,
+    this.memoryId,
+  });
   @override
   State<AlbumCover> createState() => _AlbumCoverState();
 }
@@ -158,6 +176,7 @@ class _AlbumCoverState extends State<AlbumCover> {
                   widget.photos,
                   widget.title,
                   initialIndex: i,
+                  memoryId: widget.memoryId,
                 ),
                 child: Photo(widget.photos[i], height: 280),
               ),

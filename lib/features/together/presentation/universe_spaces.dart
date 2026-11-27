@@ -68,20 +68,37 @@ class UniverseSpaces extends ConsumerWidget {
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(
-                Icons.style_outlined,
+                Icons.sports_esports_outlined,
                 color: Palette.forest,
                 size: 30,
               ),
               title: Text(
-                'Notre Memory',
+                'Nos jeux à deux',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               subtitle: const Text(
-                'Un petit coffret de photos. Des paires à retrouver.',
+                'Memory, puzzle et mots mêlés : choisissons notre jeu.',
                 style: TextStyle(fontSize: 12),
               ),
               trailing: const Icon(Icons.arrow_forward, size: 18),
-              onTap: () => context.push('/universe/memory'),
+              onTap: () => context.push('/universe/games'),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Paper(
+            color: Palette.cream,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.card_giftcard, color: Palette.forest),
+              title: Text(
+                'Les petites attentions',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              subtitle: const Text('Des bons à offrir, des douceurs à vivre.'),
+              trailing: const Icon(Icons.arrow_forward, size: 18),
+              onTap: () => context.push('/universe/attentions'),
             ),
           ),
         ),

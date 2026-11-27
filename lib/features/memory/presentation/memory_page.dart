@@ -42,13 +42,13 @@ class _MemoryPageState extends State<MemoryPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          tooltip: 'Revenir à notre univers',
+          tooltip: 'Retour aux jeux',
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/universe');
+              context.go('/universe/games');
             }
           },
         ),

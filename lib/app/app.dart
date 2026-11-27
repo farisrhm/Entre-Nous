@@ -15,6 +15,11 @@ import '../features/universe/presentation/universe_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import 'theme.dart';
+import '../features/romantic_games/presentation/games_page.dart';
+import '../features/constellation/presentation/constellation_page.dart';
+import '../features/romantic_games/presentation/puzzle_page.dart';
+import '../features/romantic_games/presentation/words_page.dart';
+import '../features/attentions/presentation/attentions_page.dart';
 import '../features/memory/presentation/memory_page.dart';
 import '../core/notifications/notification_bridge.dart';
 import '../core/notifications/push_service.dart';
@@ -41,7 +46,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
         ],
       ),
+      GoRoute(path: '/story/sky', builder: (_, _) => const ConstellationPage()),
+      GoRoute(path: '/universe/games', builder: (_, _) => const GamesPage()),
+      GoRoute(path: '/universe/puzzle', builder: (_, _) => const PuzzlePage()),
+      GoRoute(path: '/universe/words', builder: (_, _) => const WordsPage()),
       GoRoute(path: '/universe/memory', builder: (_, _) => const MemoryPage()),
+      GoRoute(
+        path: '/universe/attentions',
+        builder: (_, _) => const AttentionsPage(),
+      ),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
     ],
   );

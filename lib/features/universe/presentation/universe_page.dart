@@ -74,6 +74,70 @@ class _UniversePageState extends ConsumerState<UniversePage> {
           'Notre petit univers',
           'Nos souvenirs d’hier, nos rêves de demain.',
         ),
+        Paper(
+          color: Palette.forest,
+          child: Column(
+            children: [
+              const Eyebrow('JUSTE COMME ÇA', color: Palette.ivory),
+              const SizedBox(height: 22),
+              const Icon(Icons.favorite, color: Palette.gold, size: 56),
+              const SizedBox(height: 24),
+              Text(
+                'Une petite pensée,\njuste pour toi.',
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium!.copyWith(color: Palette.ivory),
+              ),
+              const SizedBox(height: 22),
+              FilledButton.tonal(
+                onPressed: sending
+                    ? null
+                    : () async {
+                        setState(() => sending = true);
+                        try {
+                          if (repo.isCloud) {
+                            await ref
+                                .read(entriesProvider.notifier)
+                                .save(
+                                  Entry(
+                                    id: DateTime.now().microsecondsSinceEpoch
+                                        .toString(),
+                                    kind: EntryKind.thought,
+                                    fields: {
+                                      'title': 'Je pense à toi',
+                                      'sentAt': DateTime.now()
+                                          .toUtc()
+                                          .toIso8601String(),
+                                    },
+                                  ),
+                                );
+                          }
+                          if (context.mounted) {
+                            await showReading(
+                              context,
+                              'Je pense à toi',
+                              'Ta pensée est déposée avec amour dans notre espace.',
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) showError(context, e);
+                        } finally {
+                          if (mounted) setState(() => sending = false);
+                        }
+                      },
+                child: Text(sending ? 'Envoi…' : 'Je pense à toi  ♡'),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Un petit mot d’amour, déposé rien que pour nous.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Palette.ivory, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
         const UniverseSpaces(),
         const Eyebrow('NOS PROMESSES'),
         const SizedBox(height: 18),
@@ -163,69 +227,6 @@ class _UniversePageState extends ConsumerState<UniversePage> {
           label: const Text('Ajouter un rêve'),
         ),
         const SizedBox(height: 32),
-        Paper(
-          color: Palette.forest,
-          child: Column(
-            children: [
-              const Eyebrow('JUSTE COMME ÇA', color: Palette.ivory),
-              const SizedBox(height: 22),
-              const Icon(Icons.favorite, color: Palette.gold, size: 56),
-              const SizedBox(height: 24),
-              Text(
-                'Une petite pensée,\njuste pour toi.',
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineMedium!.copyWith(color: Palette.ivory),
-              ),
-              const SizedBox(height: 22),
-              FilledButton.tonal(
-                onPressed: sending
-                    ? null
-                    : () async {
-                        setState(() => sending = true);
-                        try {
-                          if (repo.isCloud) {
-                            await ref
-                                .read(entriesProvider.notifier)
-                                .save(
-                                  Entry(
-                                    id: DateTime.now().microsecondsSinceEpoch
-                                        .toString(),
-                                    kind: EntryKind.thought,
-                                    fields: {
-                                      'title': 'Je pense à toi',
-                                      'sentAt': DateTime.now()
-                                          .toUtc()
-                                          .toIso8601String(),
-                                    },
-                                  ),
-                                );
-                          }
-                          if (context.mounted) {
-                            await showReading(
-                              context,
-                              'Je pense à toi',
-                              'Ta pensée est déposée avec amour dans notre espace.',
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) showError(context, e);
-                        } finally {
-                          if (mounted) setState(() => sending = false);
-                        }
-                      },
-                child: Text(sending ? 'Envoi…' : 'Je pense à toi  ♡'),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Un petit mot d’amour, déposé rien que pour nous.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Palette.ivory, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
         if (thoughts.isNotEmpty) ...[
           const SizedBox(height: 24),
           const Eyebrow('NOS DERNIÈRES PENSÉES'),

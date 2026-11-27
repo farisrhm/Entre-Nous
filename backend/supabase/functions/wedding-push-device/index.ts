@@ -15,7 +15,14 @@ Deno.serve(async (req: Request) => {
     const action = body.action;
     if (action === "preferences") {
       if (body.preferences !== undefined) {
-        const allowed = ["enabled", "thought", "memory", "dua", "letter"];
+        const allowed = [
+          "enabled",
+          "thought",
+          "memory",
+          "dua",
+          "letter",
+          "voucher",
+        ];
         if (
           !body.preferences || typeof body.preferences !== "object" ||
           Array.isArray(body.preferences)
@@ -33,7 +40,10 @@ Deno.serve(async (req: Request) => {
       }
       const { data, error } = await admin.from(
         "wedding_notification_preferences",
-      ).select("enabled,thought,memory,dua,letter").eq("user_id", user.id)
+      ).select("enabled,thought,memory,dua,letter,voucher").eq(
+        "user_id",
+        user.id,
+      )
         .maybeSingle();
       if (error) throw error;
       return json({
@@ -44,6 +54,7 @@ Deno.serve(async (req: Request) => {
             memory: true,
             dua: true,
             letter: true,
+            voucher: true,
           },
       });
     }

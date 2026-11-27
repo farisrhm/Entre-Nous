@@ -83,7 +83,7 @@ create function public.act_on_voucher(p_id uuid,p_operation uuid,p_version integ
 declare actor uuid:=auth.uid(); v public.couple_vouchers; old_status text; event public.couple_voucher_events;
 begin
  select * into v from public.couple_vouchers where id=p_id for update;
- if not found or not public.voucher_access(v.couple_id,v.sender_id,v.recipient_id) then raise exception 'Non autorisé'; end if;
+ if not found or actor is null or not coalesce(public.voucher_access(v.couple_id,v.sender_id,v.recipient_id),false) then raise exception 'Non autorisé'; end if;
  select * into event from public.couple_voucher_events where id=p_operation;
  if found then
    if event.voucher_id<>p_id or event.actor_id<>actor or event.action<>p_action

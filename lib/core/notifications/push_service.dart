@@ -35,7 +35,7 @@ class PushTarget {
     if (recipient is! String ||
         id is! String ||
         entry is! String ||
-        !['thought', 'memory', 'dua', 'letter'].contains(kind) ||
+        !['thought', 'memory', 'dua', 'letter', 'voucher'].contains(kind) ||
         !RegExp(r'^[a-zA-Z0-9_-]{1,100}$').hasMatch(entry)) {
       return null;
     }
@@ -46,25 +46,30 @@ class PushTarget {
     'memory' => '/story',
     'dua' => '/universe/dua',
     'letter' => '/letters',
+    'voucher' => '/universe/attentions',
     _ => '/universe',
   };
 }
 
 class PushService extends ChangeNotifier {
   final SupabaseClient client;
-  PushService(this.client);
+  final Duration requestTimeout;
+  PushService(this.client, {this.requestTimeout = const Duration(seconds: 12)});
   Map<String, bool> preferences = {
     'enabled': false,
     'thought': true,
     'memory': true,
     'dua': true,
     'letter': true,
+    'voucher': true,
   };
   String? error;
   PushTarget? pending;
   bool busy = false;
   bool _disposed = false;
   Future<void>? _initializing;
+  Future<void>? _refreshing;
+  bool _listening = false;
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   Future<void> _tail = Future.value();
   String? _registeredToken;
@@ -75,25 +80,41 @@ class PushService extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  Future<T> _wait<T>(Future<T> future, String step, {Duration? timeout}) =>
+      future.timeout(
+        timeout ?? requestTimeout,
+        onTimeout: () => throw TimeoutException(step),
+      );
+
   Future<void> _initialize() =>
       _initializing ??= _initializeFirebase().catchError((Object e) {
         _initializing = null;
         throw e;
       });
   Future<void> _initializeFirebase() async {
-    if (Firebase.apps.isEmpty) await Firebase.initializeApp();
-    await FirebaseMessaging.instance.setAutoInitEnabled(false);
-    await FirebaseMessaging.instance
-        .setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: false,
-          sound: true,
-        );
+    if (Firebase.apps.isEmpty) {
+      await _wait(Firebase.initializeApp(), 'Initialisation Firebase');
+    }
+    if (_disposed) return;
+    await _wait(
+      FirebaseMessaging.instance.setAutoInitEnabled(false),
+      'Configuration Firebase',
+    );
+    await _wait(
+      FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: false,
+        sound: true,
+      ),
+      'Configuration des alertes iOS',
+    );
+    if (_disposed || _listening) return;
+    _listening = true;
     _subscriptions.add(FirebaseMessaging.onMessageOpenedApp.listen(_opened));
     _subscriptions.add(
-      FirebaseMessaging.instance.onTokenRefresh.listen(
-        (_) => unawaited(refresh()),
-      ),
+      FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+        if (token != _registeredToken) unawaited(refresh());
+      }),
     );
     _subscriptions.add(
       client.auth.onAuthStateChange.listen((state) {
@@ -104,8 +125,17 @@ class PushService extends ChangeNotifier {
         unawaited(refresh());
       }),
     );
-    final initial = await FirebaseMessaging.instance.getInitialMessage();
-    if (initial != null) _opened(initial);
+    // An optional launch notification must never block permission controls.
+    unawaited(
+      _wait(
+            FirebaseMessaging.instance.getInitialMessage(),
+            'Notification de démarrage',
+          )
+          .then((initial) {
+            if (!_disposed && initial != null) _opened(initial);
+          })
+          .catchError((Object _) {}),
+    );
   }
 
   void _opened(RemoteMessage message) {
@@ -121,9 +151,9 @@ class PushService extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> _call(Map<String, dynamic> body) async {
-    final result = await client.functions.invoke(
-      'wedding-push-device',
-      body: body,
+    final result = await _wait(
+      client.functions.invoke('wedding-push-device', body: body),
+      'Connexion au service de notifications',
     );
     return Map<String, dynamic>.from(result.data as Map);
   }
@@ -146,6 +176,9 @@ class PushService extends ChangeNotifier {
       _notify();
       try {
         await action();
+      } on TimeoutException catch (e) {
+        error =
+            '${e.message} : délai dépassé. Le chargement a été arrêté. Réessaie dans un instant.';
       } catch (_) {
         error =
             'Notifications indisponibles. Vérifie ta connexion et les autorisations dans les réglages de l’iPhone, puis réessaie.';
@@ -158,29 +191,49 @@ class PushService extends ChangeNotifier {
     return next;
   }
 
-  Future<void> refresh() => _run(() async {
-    await _initialize();
+  Future<void> refresh() =>
+      _refreshing ??= _run(_refresh).whenComplete(() => _refreshing = null);
+
+  Future<void> _refresh() async {
     final user = client.auth.currentUser?.id;
     if (user == null) {
-      await FirebaseMessaging.instance.deleteToken();
+      if (Firebase.apps.isNotEmpty) {
+        await _wait(
+          FirebaseMessaging.instance.deleteToken(),
+          'Suppression du jeton',
+        );
+      }
       _registeredToken = null;
       _registeredUser = null;
       return;
     }
     if (_registeredUser != null && _registeredUser != user) {
-      await FirebaseMessaging.instance.deleteToken();
+      await _wait(
+        FirebaseMessaging.instance.deleteToken(),
+        'Changement de compte',
+      );
       _registeredToken = null;
       _registeredUser = null;
     }
+    // Do not wait for Firebase/APNs merely to display the disabled switch.
     await _loadPreferences();
-    if (client.auth.currentUser?.id != user) return;
-    final settings = await FirebaseMessaging.instance.getNotificationSettings();
-    if (preferences['enabled'] == true && _allowed(settings)) {
+    if (_disposed || client.auth.currentUser?.id != user) return;
+    if (preferences['enabled'] != true) {
+      if (_registeredToken != null) await _unregister();
+      return;
+    }
+    await _initialize();
+    if (_disposed || client.auth.currentUser?.id != user) return;
+    final settings = await _wait(
+      FirebaseMessaging.instance.getNotificationSettings(),
+      'Autorisation iOS',
+    );
+    if (_allowed(settings)) {
       await _register(user);
     } else if (_registeredToken != null) {
       await _unregister();
     }
-  });
+  }
 
   bool _allowed(NotificationSettings settings) =>
       settings.authorizationStatus == AuthorizationStatus.authorized ||
@@ -188,16 +241,19 @@ class PushService extends ChangeNotifier {
   Future<void> _register(String user) async {
     final messaging = FirebaseMessaging.instance;
     // APNs must be available before requesting an FCM token on iOS.
-    String? apns = await messaging.getAPNSToken();
+    String? apns = await _wait(
+      messaging.getAPNSToken(),
+      'Enregistrement Apple APNs',
+    );
     for (var i = 0; apns == null && i < 3; i++) {
       await Future<void>.delayed(const Duration(seconds: 1));
-      apns = await messaging.getAPNSToken();
+      apns = await _wait(messaging.getAPNSToken(), 'Enregistrement Apple APNs');
     }
     if (apns == null) throw StateError('APNs is not ready');
-    final token = await messaging.getToken();
-    if (token == null || client.auth.currentUser?.id != user || _disposed) {
-      return;
-    }
+    final token = await _wait(messaging.getToken(), 'Enregistrement Firebase');
+    if (client.auth.currentUser?.id != user || _disposed) return;
+    if (token == null) throw StateError('FCM token unavailable');
+    if (_registeredToken == token && _registeredUser == user) return;
     await _call({'action': 'register', 'token': token});
     if (_registeredToken != null && _registeredToken != token) {
       await _call({'action': 'unregister', 'token': _registeredToken});
@@ -211,7 +267,10 @@ class PushService extends ChangeNotifier {
         client.auth.currentUser?.id == _registeredUser) {
       await _call({'action': 'unregister', 'token': _registeredToken});
     }
-    await FirebaseMessaging.instance.deleteToken();
+    await _wait(
+      FirebaseMessaging.instance.deleteToken(),
+      'Suppression du jeton',
+    );
     _registeredToken = null;
     _registeredUser = null;
   }
@@ -222,10 +281,14 @@ class PushService extends ChangeNotifier {
     if (user == null) throw StateError('Sign in first');
     await _loadPreferences();
     if (enabled) {
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: false,
-        sound: true,
+      final settings = await _wait(
+        FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: false,
+          sound: true,
+        ),
+        'Autorisation iOS',
+        timeout: const Duration(minutes: 1),
       );
       if (!_allowed(settings)) throw StateError('Permission denied');
       await _register(user);
@@ -237,7 +300,9 @@ class PushService extends ChangeNotifier {
     }
   });
   Future<void> setCategory(String category, bool enabled) => _run(() async {
-    if (!['thought', 'memory', 'dua', 'letter'].contains(category)) return;
+    if (!['thought', 'memory', 'dua', 'letter', 'voucher'].contains(category)) {
+      return;
+    }
     await _loadPreferences();
     await _savePreferences({...preferences, category: enabled});
   });
@@ -251,7 +316,10 @@ class PushService extends ChangeNotifier {
       await _unregister();
     } catch (_) {
       // Revoking the FCM token also prevents alerts if the server is offline.
-      await FirebaseMessaging.instance.deleteToken();
+      await _wait(
+        FirebaseMessaging.instance.deleteToken(),
+        'Suppression du jeton',
+      );
       _registeredToken = null;
       _registeredUser = null;
     }

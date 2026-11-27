@@ -32,3 +32,12 @@ Deno.test("only generic messages, no letter body or invented prayer completion",
   );
   assertThrows(() => pushMessage("invalid", "Faris", "masculine"));
 });
+
+Deno.test("voucher notifications do not disclose personal messages", () => {
+  const message = pushMessage("voucher", "Alyssa", "feminine");
+  assertEquals(message.title, "Les petites attentions");
+  assertEquals(
+    message.body,
+    "Alyssa a laissé du nouveau dans votre carnet d’attentions.",
+  );
+});
